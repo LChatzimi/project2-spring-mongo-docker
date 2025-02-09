@@ -48,6 +48,11 @@ public class CrimeReportController {
         return crimeReportService.getTwoLeastCommonCrimes(startDate, endDate);
     }
 
+    @GetMapping("/query5")
+    public List<Document> getWeaponsUsedInSameCrimeAcrossMultipleAreas() {
+        return crimeReportService.getWeaponsUsedInSameCrimeAcrossMultipleAreas();
+    }
+
 
     @PostMapping("/{drNo}/upvote")
     public String upvoteCrimeReport(@PathVariable String drNo, @RequestBody Upvote upvote) {
