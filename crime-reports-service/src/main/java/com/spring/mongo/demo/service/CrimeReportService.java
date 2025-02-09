@@ -346,6 +346,34 @@ public class CrimeReportService {
     }
 
 
+    /**
+     *  Query 10
+     */
+    public List<Document> getAreasAndReportsByOfficer(String officerName) {
+        UnwindOperation unwindUpvotes = Aggregation.unwind("upvotes");
+
+        MatchOperation matchOperation = Aggregation.match(
+                Criteria.where("upvotes.officerName").is(officerName)
+        );
+
+        GroupOperation groupOperation = Aggregation.group("upvotes.officerName")
+                .addToSet("areaInfo.areaName").as("areas")
+                .addToSet("drNo").as("reports");
+
+        ProjectionOperation projectOperation = Aggregation.project()
+                .and("$_id").as("officerName")
+                .andInclude("areas", "reports");
+
+        Aggregation aggregation = Aggregation.newAggregation(
+                unwindUpvotes,
+                matchOperation,
+                groupOperation,
+                projectOperation
+        );
+
+        return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
+    }
+
 
 
 

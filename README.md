@@ -58,6 +58,8 @@ and try below command in terminal
     > **GET Mapping** http://localhost:8088/api/crime-reports/query8 - Query8
     
     > **GET Mapping** http://localhost:8088/api/crime-reports/query9 - Query9
+    
+    > **GET Mapping** http://localhost:8088/api/crime-reports/query10?officerName=Officer 87 - Query10
   
     
 
