@@ -17,6 +17,7 @@ public class CrimeReportController {
     @Autowired
     private CrimeReportService crimeReportService;
 
+
     @GetMapping("/query1")
     public List<Document> getTotalReportsByCrimeCode(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
@@ -33,14 +34,23 @@ public class CrimeReportController {
         return crimeReportService.getDailyReportsByCrimeCode(crimeCode, startDate, endDate);
     }
 
-    @PostMapping("/{drNo}/upvote")
-    public String upvoteCrimeReport(@PathVariable String drNo, @RequestBody Upvote upvote) {
-        return crimeReportService.upvoteCrimeReport(drNo, upvote);
-    }
 
     @GetMapping("/query3")
     public List<Document> getTopCrimesPerArea(
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return crimeReportService.getTopCrimesByAreaForDay(date);
+    }
+
+    @GetMapping("/query4")
+    public List<Document> getTopCrimesPerArea(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        return crimeReportService.getTwoLeastCommonCrimes(startDate, endDate);
+    }
+
+
+    @PostMapping("/{drNo}/upvote")
+    public String upvoteCrimeReport(@PathVariable String drNo, @RequestBody Upvote upvote) {
+        return crimeReportService.upvoteCrimeReport(drNo, upvote);
     }
 }

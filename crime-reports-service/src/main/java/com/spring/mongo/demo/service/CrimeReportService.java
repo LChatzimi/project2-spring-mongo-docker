@@ -93,26 +93,25 @@ public class CrimeReportService {
         return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
     }
 
+    /**
+     *  Query 3
+     */
     public List<Document> getTopCrimesByAreaForDay(LocalDate date) {
         Date startOfDay = toDate(date.atStartOfDay());
         Date endOfDay = toDate(date.atTime(23, 59, 59));
 
-        // Match documents by date
         MatchOperation dateMatch = Aggregation.match(
                 Criteria.where("dateOccurred")
                         .gte(startOfDay)
                         .lte(endOfDay)
         );
 
-        // Unwind crimeCodes array
         UnwindOperation unwindCrimeCodes = Aggregation.unwind("crimeCodes");
 
-        // Match non-empty crimeCodes
         MatchOperation crimeCodeMatch = Aggregation.match(
                 Criteria.where("crimeCodes.crimeCode").ne("")
         );
 
-        // Group by areaName and crimeCode, and count total reports
         GroupOperation groupByAreaAndCrime = Aggregation.group(
                 Fields.from(
                         Fields.field("areaName", "$areaInfo.areaName"),
@@ -120,23 +119,19 @@ public class CrimeReportService {
                 )
         ).count().as("totalReports");
 
-        // Sort by totalReports in descending order
         SortOperation sortByTotalReports = Aggregation.sort(Sort.Direction.DESC, "totalReports");
 
-        // Group by areaName and collect top crimes
         GroupOperation groupByArea = Aggregation.group("_id.areaName")
                 .push(
                         new BasicDBObject("crime", "$_id.crimeCode")
                                 .append("count", "$totalReports")
                 ).as("topCrimes");
 
-        // Project to get only top 3 crimes
         ProjectionOperation projectTop3Crimes = Aggregation.project()
                 .and("topCrimes").slice(3).as("topCrimes");
 
 
 
-        // Combine all operations into an aggregation
         Aggregation aggregation = Aggregation.newAggregation(
                 dateMatch,
                 unwindCrimeCodes,
@@ -147,8 +142,37 @@ public class CrimeReportService {
                 projectTop3Crimes
         );
 
-        // Execute aggregation and return results
         return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
+    }
+
+    /**
+     *  Query 4
+     */
+    public List<Document> getTwoLeastCommonCrimes(LocalDate startDate, LocalDate endDate) {
+        Date start = toDate(startDate.atStartOfDay());
+        Date end = toDate(endDate.atTime(23, 59, 59));
+
+        MatchOperation matchOperation = Aggregation.match(
+                Criteria.where("dateOccurred").gte(start).lte(end)
+        );
+
+        UnwindOperation unwindCrimeCodes = Aggregation.unwind("crimeCodes");
+
+        GroupOperation groupOperation = Aggregation.group("crimeCodes.crimeDescription")
+                .count().as("totalReports");
+
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.ASC, "totalReports");
+
+        Aggregation aggregation = Aggregation.newAggregation(
+                matchOperation,
+                unwindCrimeCodes,
+                groupOperation,
+                sortOperation,
+                Aggregation.limit(2)
+        );
+
+        AggregationResults<Document> results = mongoTemplate.aggregate(aggregation, "crime_reports", Document.class);
+        return results.getMappedResults();
     }
 
     private Date toDate(LocalDateTime localDateTime) {
