@@ -59,6 +59,11 @@ public class CrimeReportController {
         return crimeReportService.getTopUpvotedReportsForDay(date);
     }
 
+    @GetMapping("/query7")
+    public List<Document> getTop50ActiveOfficers() {
+        return crimeReportService.getTop50ActiveOfficers();
+    }
+
 
     @PostMapping("/{drNo}/upvote")
     public String upvoteCrimeReport(@PathVariable String drNo, @RequestBody Upvote upvote) {

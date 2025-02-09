@@ -245,6 +245,41 @@ public class CrimeReportService {
         return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
     }
 
+    /**
+     *  Query 7
+     */
+    public List<Document> getTop50ActiveOfficers() {
+        UnwindOperation unwindUpvotes = Aggregation.unwind("upvotes");
+
+        GroupOperation groupOperation = Aggregation.group(
+                Fields.from(
+                        Fields.field("officerName", "upvotes.officerName"),
+                        Fields.field("officerEmail", "upvotes.officerEmail"),
+                        Fields.field("badgeNumber", "upvotes.badgeNumber")
+                )
+        ).count().as("totalUpvotes");
+
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "totalUpvotes");
+
+        LimitOperation limitOperation = Aggregation.limit(50);
+
+        ProjectionOperation projectOperation = Aggregation.project()
+                .and("_id.officerName").as("officerName")
+                .and("_id.officerEmail").as("officerEmail")
+                .and("_id.badgeNumber").as("badgeNumber")
+                .andInclude("totalUpvotes");
+
+        Aggregation aggregation = Aggregation.newAggregation(
+                unwindUpvotes,
+                groupOperation,
+                sortOperation,
+                limitOperation,
+                projectOperation
+        );
+
+        return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
+    }
+
 
 
 
