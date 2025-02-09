@@ -281,6 +281,42 @@ public class CrimeReportService {
     }
 
 
+    /**
+     *  Query 8
+     */
+    public List<Document> getTopFiftyOfficersByUpvotedAreas() {
+        UnwindOperation unwindUpvotes = Aggregation.unwind("upvotes");
+
+        GroupOperation groupByOfficer = Aggregation.group(
+                Fields.fields(
+                        "upvotes.officerName",
+                        "upvotes.officerEmail",
+                        "upvotes.badgeNumber"
+                )
+        ).addToSet("areaInfo.areaName").as("areas");
+
+        ProjectionOperation projectFields = Aggregation.project()
+                .and("_id.upvotes.officerName").as("officerName")
+                .and("_id.upvotes.officerEmail").as("officerEmail")
+                .and("_id.upvotes.badgeNumber").as("badgeNumber")
+                .and(ArrayOperators.Size.lengthOfArray("$areas")).as("totalAreas");
+
+        SortOperation sortByTotalAreas = Aggregation.sort(Sort.Direction.DESC, "totalAreas");
+
+        LimitOperation limitToFifty = Aggregation.limit(50);
+
+        Aggregation aggregation = Aggregation.newAggregation(
+                unwindUpvotes,
+                groupByOfficer,
+                projectFields,
+                sortByTotalAreas,
+                limitToFifty
+        );
+
+        return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
+    }
+
+
 
 
 

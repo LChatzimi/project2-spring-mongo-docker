@@ -54,6 +54,8 @@ and try below command in terminal
     > **GET Mapping** http://localhost:8088/api/crime-reports/query6?date=2020-01-01 - Query6
     
     > **GET Mapping** http://localhost:8088/api/crime-reports/query7 - Query7
+    
+    > **GET Mapping** http://localhost:8088/api/crime-reports/query8 - Query8
   
     
 
