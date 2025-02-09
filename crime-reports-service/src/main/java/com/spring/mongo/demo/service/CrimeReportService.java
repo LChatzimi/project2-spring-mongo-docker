@@ -1,5 +1,6 @@
 package com.spring.mongo.demo.service;
 
+import com.mongodb.BasicDBObject;
 import com.spring.mongo.demo.model.CrimeReport;
 import com.spring.mongo.demo.model.Upvote;
 import com.spring.mongo.demo.repository.CrimeReportRepository;
@@ -33,13 +34,9 @@ public class CrimeReportService {
     }
 
     /**
-     *  1. Find the total number of reports per ‘Crm Cd” that occurred within a specified time range and sort them in a descending order.
-     * @param startDate the start date of the time range
-     * @param endDate the end date of the time range
-     * @return a list of documents containing the crime code and the total number of reports
+     *  Query 1
      */
     public List<Document> getTotalReportsByCrimeCode(LocalDate startDate, LocalDate endDate) {
-        // Ensure UTC time zone consistency
         Date start = toDate(startDate.atStartOfDay());
         Date end = toDate(endDate.atTime(23, 59, 59));
 
@@ -47,7 +44,7 @@ public class CrimeReportService {
 
         MatchOperation matchOperation = Aggregation.match(
                 Criteria.where("dateOccurred").gte(start).lte(end)
-                        .and("crimeCodes.crimeCode").ne("")  // Exclude empty and null crime codes
+                        .and("crimeCodes.crimeCode").ne("")
         );
 
         GroupOperation groupOperation = Aggregation.group("crimeCodes.crimeCode")
@@ -62,6 +59,95 @@ public class CrimeReportService {
                 sortOperation
         );
 
+        return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
+    }
+
+
+    /**
+     *  Query 2
+     */
+    public List<Document> getDailyReportsByCrimeCode(String crimeCode, LocalDate startDate, LocalDate endDate) {
+        Date start = toDate(startDate.atStartOfDay());
+        Date end = toDate(endDate.atTime(23, 59, 59));
+
+        MatchOperation matchOperation = Aggregation.match(
+                Criteria.where("crimeCodes.crimeCode").is(crimeCode)
+                        .and("dateOccurred").gte(start).lte(end)
+        );
+
+        ProjectionOperation projectDate = Aggregation.project()
+                .and(DateOperators.dateOf("dateOccurred").toString("%Y-%m-%d")).as("reportDate");
+
+        GroupOperation groupByDate = Aggregation.group("reportDate")
+                .count().as("totalReports");
+
+        SortOperation sortByDate = Aggregation.sort(Sort.by(Sort.Direction.ASC, "_id"));
+
+        Aggregation aggregation = Aggregation.newAggregation(
+                matchOperation,
+                projectDate,
+                groupByDate,
+                sortByDate
+        );
+
+        return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
+    }
+
+    public List<Document> getTopCrimesByAreaForDay(LocalDate date) {
+        Date startOfDay = toDate(date.atStartOfDay());
+        Date endOfDay = toDate(date.atTime(23, 59, 59));
+
+        // Match documents by date
+        MatchOperation dateMatch = Aggregation.match(
+                Criteria.where("dateOccurred")
+                        .gte(startOfDay)
+                        .lte(endOfDay)
+        );
+
+        // Unwind crimeCodes array
+        UnwindOperation unwindCrimeCodes = Aggregation.unwind("crimeCodes");
+
+        // Match non-empty crimeCodes
+        MatchOperation crimeCodeMatch = Aggregation.match(
+                Criteria.where("crimeCodes.crimeCode").ne("")
+        );
+
+        // Group by areaName and crimeCode, and count total reports
+        GroupOperation groupByAreaAndCrime = Aggregation.group(
+                Fields.from(
+                        Fields.field("areaName", "$areaInfo.areaName"),
+                        Fields.field("crimeCode", "$crimeCodes.crimeCode")
+                )
+        ).count().as("totalReports");
+
+        // Sort by totalReports in descending order
+        SortOperation sortByTotalReports = Aggregation.sort(Sort.Direction.DESC, "totalReports");
+
+        // Group by areaName and collect top crimes
+        GroupOperation groupByArea = Aggregation.group("_id.areaName")
+                .push(
+                        new BasicDBObject("crime", "$_id.crimeCode")
+                                .append("count", "$totalReports")
+                ).as("topCrimes");
+
+        // Project to get only top 3 crimes
+        ProjectionOperation projectTop3Crimes = Aggregation.project()
+                .and("topCrimes").slice(3).as("topCrimes");
+
+
+
+        // Combine all operations into an aggregation
+        Aggregation aggregation = Aggregation.newAggregation(
+                dateMatch,
+                unwindCrimeCodes,
+                crimeCodeMatch,
+                groupByAreaAndCrime,
+                sortByTotalReports,
+                groupByArea,
+                projectTop3Crimes
+        );
+
+        // Execute aggregation and return results
         return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
     }
 

@@ -43,6 +43,10 @@ and try below command in terminal
 - Endpoints that implement requested queries are as follows:
     > **GET Mapping** http://localhost:8088/api/crime-reports/query1?startDate=2020-01-01&endDate=2020-12-31 - Query1
     
+    > **GET Mapping** http://localhost:8088/api/crime-reports/query2?crimeCode=510&startDate=2020-01-01&endDate=2020-12-31 - Query2
+
+    > **GET Mapping** http://localhost:8088/api/crime-reports/query3?date=2020-01-01 - Query3
+    
 
 
 - #### Add Upvote to Crime Report
