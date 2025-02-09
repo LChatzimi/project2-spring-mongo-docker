@@ -53,6 +53,12 @@ public class CrimeReportController {
         return crimeReportService.getWeaponsUsedInSameCrimeAcrossMultipleAreas();
     }
 
+    @GetMapping("/query6")
+    public List<Document> getCrimeReportsByLocation(
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return crimeReportService.getTopUpvotedReportsForDay(date);
+    }
+
 
     @PostMapping("/{drNo}/upvote")
     public String upvoteCrimeReport(@PathVariable String drNo, @RequestBody Upvote upvote) {

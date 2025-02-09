@@ -50,6 +50,8 @@ and try below command in terminal
     > **GET Mapping** http://localhost:8088/api/crime-reports/query4?startDate=2020-01-01&endDate=2020-12-31 - Query4
    
     > **GET Mapping** http://localhost:8088/api/crime-reports/query5 - Query5
+   
+    > **GET Mapping** http://localhost:8088/api/crime-reports/query6?date=2020-01-01- Query6
   
     
 

@@ -15,10 +15,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 import org.bson.Document;
 
 @Service
@@ -179,37 +177,30 @@ public class CrimeReportService {
      *  Query 5
      */
     public List<Document> getWeaponsUsedInSameCrimeAcrossMultipleAreas() {
-        // Unwind the crimeCodes array
         UnwindOperation unwindCrimeCodes = Aggregation.unwind("crimeCodes");
 
-        // First match stage: filter out empty crimeCodes and weaponDescriptions
         MatchOperation initialMatch = Aggregation.match(
                 Criteria.where("crimeCodes.crimeCode").ne("")
                         .and("weaponInfo.weaponDescription").ne("")
         );
 
-        // Group by crimeCode and weaponDescription, collecting unique area names
         GroupOperation groupByCrimeAndWeapon = Aggregation.group(
                 Fields.from(Fields.field("crimeCode", "crimeCodes.crimeCode"),
                         Fields.field("weaponUsed", "weaponInfo.weaponDescription"))
         ).addToSet("areaInfo.areaName").as("areas");
 
-        // Second match stage: keep only groups with more than one area
         MatchOperation areasGreaterThanOne = Aggregation.match(
                 Criteria.where("areas.1").exists(true)
         );
 
-        // Group by crimeCode, collecting unique weaponDescriptions
         GroupOperation groupByCrimeCode = Aggregation.group("_id.crimeCode")
                 .addToSet("_id.weaponUsed").as("weapons");
 
-        // Project the final output format
         ProjectionOperation projectFields = Aggregation.project()
                 .and("_id").as("crimeCode")
                 .and("weapons").as("weapons")
                 .andExclude("_id");
 
-        // Combine all operations into one aggregation
         Aggregation aggregation = Aggregation.newAggregation(
                 unwindCrimeCodes,
                 initialMatch,
@@ -219,9 +210,42 @@ public class CrimeReportService {
                 projectFields
         );
 
-        // Execute the aggregation and return results
         return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
     }
+
+    /**
+     *  Query 6
+     */
+    public List<Document> getTopUpvotedReportsForDay(LocalDate date) {
+        Date startOfDay = toDate(date.atStartOfDay());
+        Date endOfDay = toDate(date.atTime(23, 59, 59));
+
+        MatchOperation matchOperation = Aggregation.match(
+                Criteria.where("dateOccurred").gte(startOfDay).lte(endOfDay)
+        );
+
+        ProjectionOperation projectOperation = Aggregation.project("drNo", "dateOccurred")
+                .and(
+                        ArrayOperators.Size.lengthOfArray(
+                                ConditionalOperators.ifNull("upvotes").then(Collections.emptyList())
+                        )
+                ).as("totalUpvotes");
+
+        SortOperation sortOperation = Aggregation.sort(Sort.Direction.DESC, "totalUpvotes");
+
+        LimitOperation limitOperation = Aggregation.limit(50);
+
+        Aggregation aggregation = Aggregation.newAggregation(
+                matchOperation,
+                projectOperation,
+                sortOperation,
+                limitOperation
+        );
+
+        return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
+    }
+
+
 
 
 
