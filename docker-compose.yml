@@ -1,0 +1,33 @@
+version: '3.8'
+
+networks:
+    local-dev-net:
+        driver: bridge
+services:
+  mongo:
+    image: mongo:4.2.10
+    container_name: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - $HOME/mongo:/data/db
+    healthcheck:
+      test: "exit 0"
+    networks:
+        - local-dev-net
+
+  crime-reports-service:
+    container_name: crime-reports-service
+    build: crime-reports-service
+    image: crime-reports-service
+    depends_on:
+      - mongo
+    hostname: localhost
+    restart: always
+    ports:
+      - 8088:8088
+    healthcheck:
+      test: "exit 0"
+    networks:
+        - local-dev-net
