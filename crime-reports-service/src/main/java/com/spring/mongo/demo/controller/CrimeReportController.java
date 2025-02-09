@@ -69,6 +69,11 @@ public class CrimeReportController {
         return crimeReportService.getTopFiftyOfficersByUpvotedAreas();
     }
 
+    @GetMapping("/query9")
+    public List<Document> getOfficersWithMultipleBadgeNumbers() {
+        return crimeReportService.getOfficersWithMultipleBadgeNumbers();
+    }
+
 
     @PostMapping("/{drNo}/upvote")
     public String upvoteCrimeReport(@PathVariable String drNo, @RequestBody Upvote upvote) {

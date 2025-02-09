@@ -317,6 +317,36 @@ public class CrimeReportService {
     }
 
 
+    /**
+     *  Query 9
+     */
+    public List<Document> getOfficersWithMultipleBadgeNumbers() {
+        UnwindOperation unwindUpvotes = Aggregation.unwind("upvotes");
+
+        GroupOperation groupByOfficerEmail = Aggregation.group("upvotes.officerEmail")
+                .addToSet("upvotes.badgeNumber").as("badgeNumbers")
+                .addToSet("drNo").as("reports");
+
+        MatchOperation matchMultipleBadgeNumbers = Aggregation.match(
+                Criteria.where("badgeNumbers.1").exists(true)
+        );
+
+        ProjectionOperation projectFields = Aggregation.project()
+                .and("_id").as("officerEmail")
+                .andInclude("badgeNumbers", "reports");
+
+        Aggregation aggregation = Aggregation.newAggregation(
+                unwindUpvotes,
+                groupByOfficerEmail,
+                matchMultipleBadgeNumbers,
+                projectFields
+        ).withOptions(AggregationOptions.builder().allowDiskUse(true).build());
+
+        return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
+    }
+
+
+
 
 
 
