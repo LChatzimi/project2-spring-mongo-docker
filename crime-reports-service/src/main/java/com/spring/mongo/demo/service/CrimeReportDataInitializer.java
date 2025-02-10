@@ -122,7 +122,7 @@ public class CrimeReportDataInitializer {
     private List<Upvote> generateUpvotes() {
         List<Upvote> upvotes = new ArrayList<>();
         for (int i = 0; i < Math.random() * 1000 ; i++) {
-            int officerNumber = (int) (Math.random() * 100);
+            int officerNumber = (int) (Math.random() * 50000);
             String batchNumber = String.format("%09d", officerNumber);
             Upvote upvote = Upvote.builder()
                     .officerName("Officer " + officerNumber)

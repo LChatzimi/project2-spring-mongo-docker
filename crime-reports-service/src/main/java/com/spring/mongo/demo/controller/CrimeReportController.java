@@ -80,6 +80,12 @@ public class CrimeReportController {
         return crimeReportService.getAreasAndReportsByOfficer(officerName);
     }
 
+    @PostMapping("/create")
+    public String createCrimeReport(@RequestBody Document crimeReport) {
+        return crimeReportService.createCrimeReport(crimeReport);
+    }
+
+
 
     @PostMapping("/{drNo}/upvote")
     public String upvoteCrimeReport(@PathVariable String drNo, @RequestBody Upvote upvote) {

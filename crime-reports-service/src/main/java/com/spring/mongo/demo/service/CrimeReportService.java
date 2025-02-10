@@ -374,7 +374,41 @@ public class CrimeReportService {
         return mongoTemplate.aggregate(aggregation, "crime_reports", Document.class).getMappedResults();
     }
 
+    /**
+     *  Create a new crime report
+     */
+    public String createCrimeReport(Document crimeReport) {
 
+        CrimeReport newCrimeReport = new CrimeReport();
+        newCrimeReport.setDrNo(crimeReport.getString("drNo"));
+        String dateReported = crimeReport.getString("dateReported");
+        if (dateReported != null) {
+            newCrimeReport.setDateReported(LocalDate.parse(dateReported));
+        }
+        String dateOccurred = crimeReport.getString("dateOccurred");
+        if (dateOccurred != null) {
+            newCrimeReport.setDateOccurred(LocalDate.parse(dateOccurred));
+        }
+        newCrimeReport.setTimeOccurred(crimeReport.getString("timeOccurred"));
+        newCrimeReport.setReportDistrictNo(crimeReport.getInteger("reportDistrictNo"));
+        newCrimeReport.setPart1or2(crimeReport.getInteger("part1or2"));
+        newCrimeReport.setStatus(crimeReport.getString("status"));
+        newCrimeReport.setStatusDescription(crimeReport.getString("statusDescription"));
+        newCrimeReport.setLocation(crimeReport.getString("location"));
+        newCrimeReport.setCrossStreet(crimeReport.getString("crossStreet"));
+        newCrimeReport.setLatitude(crimeReport.getDouble("latitude").floatValue());
+        newCrimeReport.setLongitude(crimeReport.getDouble("longitude").floatValue());
+        newCrimeReport.setAreaInfo(newCrimeReport.getAreaInfo());
+        newCrimeReport.setPremiseInfo(newCrimeReport.getPremiseInfo());
+        newCrimeReport.setCrimeCodes(newCrimeReport.getCrimeCodes());
+        newCrimeReport.setVictimInfo(newCrimeReport.getVictimInfo());
+        newCrimeReport.setWeaponInfo(newCrimeReport.getWeaponInfo());
+        newCrimeReport.setMocodes(newCrimeReport.getMocodes());
+        newCrimeReport.setUpvotes(newCrimeReport.getUpvotes());
+
+        crimeReportRepository.save(newCrimeReport);
+        return "Crime report successfully created.";
+    }
 
 
 
