@@ -248,13 +248,14 @@ db.crime_reports.aggregate([
 
 
 // 9. Find all reports for which the same e-mail has been used for more than one badge numbers when casting an upvote.
+//find a report and change the badge number in order to test the query, for example:
 db.crime_reports.updateOne(
     {
-        drNo: "200106753",
-        "upvotes.badgeNumber": "000000073"
+        drNo: "200907217",
+        "upvotes.badgeNumber": "000000241"
     },
     {
-        $set: { "upvotes.$.badgeNumber": "000000070" }  // Update the badge number
+        $set: { "upvotes.$.badgeNumber": "000000240" }
     }
 );
 
