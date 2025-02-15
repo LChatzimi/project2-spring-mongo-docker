@@ -1,6 +1,8 @@
 server:
     port: 8088
 spring:
+    jackson:
+        time-zone: UTC
     data:
         mongodb:
             host: mongo
